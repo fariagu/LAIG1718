@@ -44,6 +44,7 @@ MySceneGraph.prototype.onXMLReady=function()
 MySceneGraph.prototype.parseGraph = function(rootElement) {
 
 	this.parseScene(rootElement);
+	this.parseViews(rootElement);
 	this.parseIllumination(rootElement);
 };
 
@@ -76,7 +77,7 @@ MySceneGraph.prototype.parseScene = function (rootElement) {
 	this.rootNodeID = this.reader.getString(scene, 'root', true);
 	this.axis = new CGFaxis(this.scene, axisLength, 1);
 
-	console.log('<scene root="' + this.rootNodeID + '" axis_length="' + axisLength + '"/>');
+	this.logScene(axisLength);
 };
 
 /**
@@ -88,7 +89,25 @@ MySceneGraph.prototype.parseViews = function (rootElement) {
 
     if (elems == null) return null;
 
-    //TODO: finish Views
+    var views = elems[0];
+	var perspectives = views.getElementsByTagName('perspective');
+	this.perspectives = [];
+
+	for (var i = 0; i < perspectives.length; i++) {
+
+		var id = this.reader.getString(perspectives[i], 'id', true);
+		var near = this.reader.getFloat(perspectives[i], 'near', true);
+		var far = this.reader.getFloat(perspectives[i], 'far', true);
+		var angle = this.reader.getFloat(perspectives[i], 'angle', true);
+		var from = this.parseCoordinate(perspectives[i].getElementsByTagName('from')[0], true);
+		var to = this.parseCoordinate(perspectives[i].getElementsByTagName('to')[0], true);
+
+		this.perspectives.push(new Perspective(id, near, far, angle, from, to));
+	}
+
+	//TODO: Default view
+
+	this.logViews();
 };
 
 /**
@@ -106,13 +125,10 @@ MySceneGraph.prototype.parseIllumination = function (rootElement) {
 
 	this.doublesided = this.reader.getBoolean(illumination, 'doublesided', true);
 	this.local = this.reader.getBoolean(illumination, 'local', true);
-	this.ambient = this.getRGBA(ambient, true);
-	this.background = this.getRGBA(background, true);
+	this.ambient = this.parseRGBA(ambient, true);
+	this.background = this.parseRGBA(background, true);
 
-    console.log('<illumination doublesided="' + this.doublesided + '" local="' + this.local + '">\n' +
-		'\t<ambient r="' + this.ambient[0] + '" g="' + this.ambient[1] + '" b="' + this.ambient[2] + '" a="' + this.ambient[3] + '"/>\n' +
-        '\t<background r="' + this.background[0] + '" g="' + this.background[1] + '" b="' + this.background[2] + '" a="' + this.background[3] + '"/>\n' +
-		'</illumination>');
+    this.logIllumination();
 };
 
 /**
@@ -123,6 +139,15 @@ MySceneGraph.prototype.parseLights = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'lights');
 
     if (elems == null) return null;
+
+    var lights = elems[0];
+
+    var omni = lights.getElementsByTagName('omni')[0];
+
+    for (var i = 0; i < omni.length; i++) {
+    		var omniLight = omni[i];
+
+	}
 
     //TODO: finish Lights
 };
@@ -196,14 +221,61 @@ MySceneGraph.prototype.onXMLError=function (message) {
 	this.loadedOk=false;
 };
 
-
-MySceneGraph.prototype.getRGBA = function (element, required) {
+/**
+ * Helper function
+ *
+ * @param element
+ * @param required
+ * @returns RGBA object
+ */
+MySceneGraph.prototype.parseRGBA = function (element, required) {
 	var attributes = ['r', 'g', 'b', 'a'];
-	var r = new Array();
+	var r = [];
 
 	for (var i = 0; i < attributes.length; i++) {
 		r[i] = this.reader.getFloat(element, attributes[i], required);
 	}
 
-	return vec4.fromValues(r[0], r[1], r[2], r[3]);
+	return new RGBA(r[0], r[1], r[2], r[3]);
+};
+
+/**
+ * Helper function
+ *
+ * @param element
+ * @param required
+ * @returns Coordinate object
+ */
+MySceneGraph.prototype.parseCoordinate = function (element, required) {
+    var attributes = ['x', 'y', 'z'];
+    var r = [];
+
+    for (var i = 0; i < attributes.length; i++) {
+        r[i] = this.reader.getFloat(element, attributes[i], required);
+    }
+
+    return new Coordinate(r[0], r[1], r[2]);
+};
+
+/**
+ * Logging function
+ *
+ * @param axisLength
+ */
+MySceneGraph.prototype.logScene = function (axisLength) {
+    console.log('<scene root="' + this.rootNodeID + '" axis_length="' + axisLength + '"/>');
+};
+
+MySceneGraph.prototype.logViews = function () {
+	console.log()
+};
+
+/**
+ * Logging function
+ */
+MySceneGraph.prototype.logIllumination = function () {
+    console.log('<illumination doublesided="' + this.doublesided + '" local="' + this.local + '">\n' +
+        '\t<ambient r="' + this.ambient.r + '" g="' + this.ambient.g + '" b="' + this.ambient.b + '" a="' + this.ambient.a + '"/>\n' +
+        '\t<background r="' + this.background.r + '" g="' + this.background.g + '" b="' + this.background.b + '" a="' + this.background.a + '"/>\n' +
+        '</illumination>');
 };

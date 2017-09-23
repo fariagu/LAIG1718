@@ -11,10 +11,10 @@
 
     <!-- deve definir-se um objeto para raiz do grafo , assim -->
     <!-- como o comprimento dos tres eixos (cilindros) -->
-    <scene root="root" axis_length="10.0" />
+    <scene root="root" axis_length="30.0" />
     
     
-    <views default="view1" >
+    <views default="perspective1" >
     
         <!-- declaracao obrigatoria de pelo menos uma vista; -->
         <!-- se varias vistas declaradas, o default e' a -->
@@ -25,14 +25,19 @@
             <from x="-10.0" y="-10.0" z="-10.0" />
             <to x="10.0" y="10.0" z="10.0" />
         </perspective>
+
+        <perspective id="perspective2" near="0.2" far="20.0" angle="60.0">
+            <from x="10.0" y="-10.0" z="-10.0" />
+            <to x="-10.0" y="10.0" z="10.0" />
+        </perspective>
         
     </views>
     
 
     <illumination doublesided="0" local="1" >
     
-        <ambient r="0" g="0.5" b="0" a="1" />
-        <background r="0" g="0" b="0.5" a="1" />
+        <ambient r="0.5" g="1" b="0.5" a="1" />
+        <background r="0.5" g="1" b="0.5" a="1" />
         
     </illumination>
     
