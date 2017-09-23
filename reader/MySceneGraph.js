@@ -46,6 +46,7 @@ MySceneGraph.prototype.parseGraph = function(rootElement) {
 	this.parseScene(rootElement);
 	this.parseViews(rootElement);
 	this.parseIllumination(rootElement);
+	this.parseLights(rootElement);
 };
 
 MySceneGraph.prototype.getBlock = function (rootElement, blockName) {
@@ -90,6 +91,7 @@ MySceneGraph.prototype.parseViews = function (rootElement) {
     if (elems == null) return null;
 
     var views = elems[0];
+	this.default = this.reader.getString(views, 'default', true)
 	var perspectives = views.getElementsByTagName('perspective');
 	this.perspectives = [];
 
@@ -104,8 +106,6 @@ MySceneGraph.prototype.parseViews = function (rootElement) {
 
 		this.perspectives.push(new Perspective(id, near, far, angle, from, to));
 	}
-
-	//TODO: Default view
 
 	this.logViews();
 };
@@ -142,14 +142,43 @@ MySceneGraph.prototype.parseLights = function (rootElement) {
 
     var lights = elems[0];
 
-    var omni = lights.getElementsByTagName('omni')[0];
+    this.omnis = [];
+    var omni = lights.getElementsByTagName('omni');
 
     for (var i = 0; i < omni.length; i++) {
     		var omniLight = omni[i];
 
+    		var id = this.reader.getString(omniLight, 'id', true);
+			var enabled = this.reader.getBoolean(omniLight, 'enabled', true);
+			var location = this.parseCoordinate(omniLight.getElementsByTagName('location')[0], true);
+			var w = this.reader.getFloat(omniLight.getElementsByTagName('location')[0], 'w', true);
+			var ambient = this.parseRGBA(omniLight.getElementsByTagName('ambient')[0], true);
+			var diffuse = this.parseRGBA(omniLight.getElementsByTagName('diffuse')[0], true);
+			var specular = this.parseRGBA(omniLight.getElementsByTagName('specular')[0], true);
+
+			this.omnis.push(new Omni(id, enabled, location, w, ambient, diffuse, specular));
 	}
 
-    //TODO: finish Lights
+    this.spots = [];
+    var spot = lights.getElementsByTagName('spot');
+
+    for (i = 0; i < spot.length; i++) {
+        var spotLight = spot[i];
+
+		id = this.reader.getString(spotLight, 'id', true);
+		enabled = this.reader.getBoolean(spotLight, 'enabled', true);
+        var angle = this.reader.getFloat(spotLight, 'angle', true);
+		var exponent = this.reader.getFloat(spotLight, 'exponent', true);
+		var target = this.parseCoordinate(spotLight.getElementsByTagName('target')[0], true);
+		location = this.parseCoordinate(spotLight.getElementsByTagName('location')[0], true);
+		ambient = this.parseRGBA(spotLight.getElementsByTagName('ambient')[0], true);
+		diffuse = this.parseRGBA(spotLight.getElementsByTagName('diffuse')[0], true);
+		specular = this.parseRGBA(spotLight.getElementsByTagName('specular')[0], true);
+
+        this.spots.push(new Spot(id, enabled, angle, exponent, target, location, ambient, diffuse, specular));
+    }
+
+    this.logLights();
 };
 
 /**
@@ -258,6 +287,28 @@ MySceneGraph.prototype.parseCoordinate = function (element, required) {
 };
 
 /**
+ *	Returns formatted string that displays RGBA info
+ *
+ * @param element
+ * @returns {string}
+ * @constructor
+ */
+MySceneGraph.prototype.RGBAToString = function (element) {
+	return 'r="' + element.r + '" g="' + element.g + '" b="' + element.b + '" a="' + element.a + '"';
+};
+
+/**
+ * 	Returns formatted string that displays Coordinate info
+ *
+ * @param element
+ * @returns {string}
+ * @constructor
+ */
+MySceneGraph.prototype.CoordinateToString = function (element) {
+    return 'x="' + element.x + '" y="' + element.y + '" z="' + element.z + '"';
+};
+
+/**
  * Logging function
  *
  * @param axisLength
@@ -266,8 +317,22 @@ MySceneGraph.prototype.logScene = function (axisLength) {
     console.log('<scene root="' + this.rootNodeID + '" axis_length="' + axisLength + '"/>');
 };
 
+/**
+ * Logging function
+ */
 MySceneGraph.prototype.logViews = function () {
-	console.log()
+	var str = '<views default="' + this.default + '">\n';
+
+	for (var i = 0; i < this.perspectives.length; i++) {
+		str += '\t<perspective id="' + this.perspectives[i].id + '" near="' + this.perspectives[i].near + '" far="' + this.perspectives[i].far + '" angle="' + this.perspectives[i].angle + '">\n' +
+			'\t\t<from ' + this.CoordinateToString(this.perspectives[i].from) + '/>\n' +
+			'\t\t<to ' + this.CoordinateToString(this.perspectives[i].to) + '/>\n' +
+			'\t</perspective>\n';
+	}
+
+	str += '</views>';
+
+	console.log(str);
 };
 
 /**
@@ -275,7 +340,34 @@ MySceneGraph.prototype.logViews = function () {
  */
 MySceneGraph.prototype.logIllumination = function () {
     console.log('<illumination doublesided="' + this.doublesided + '" local="' + this.local + '">\n' +
-        '\t<ambient r="' + this.ambient.r + '" g="' + this.ambient.g + '" b="' + this.ambient.b + '" a="' + this.ambient.a + '"/>\n' +
-        '\t<background r="' + this.background.r + '" g="' + this.background.g + '" b="' + this.background.b + '" a="' + this.background.a + '"/>\n' +
+        '\t<ambient '+ this.RGBAToString(this.ambient) + '/>\n' +
+        '\t<background ' + this.RGBAToString(this.background) + '/>\n' +
         '</illumination>');
 };
+
+MySceneGraph.prototype.logLights = function () {
+    var str = '<lights>\n';
+
+    for (var i = 0; i < this.omnis.length; i++) {
+        str += '\t<omni id="' + this.omnis[i].id + '" enabled="' + this.omnis[i].enabled + '">\n' +
+            '\t\t<location ' + this.CoordinateToString(this.omnis[i].location) + ' w="' + this.omnis[i].w + '"/>\n' +
+            '\t\t<ambient ' + this.RGBAToString(this.omnis[i].ambient) + '/>\n' +
+            '\t\t<diffuse ' + this.RGBAToString(this.omnis[i].diffuse) + '/>\n' +
+            '\t\t<specular ' + this.RGBAToString(this.omnis[i].specular) + '/>\n' +
+            '\t</omni>\n';
+    }
+
+    for (i = 0; i < this.spots.length; i++) {
+        str += '\t<spot id="' + this.spots[i].id + '" enabled="' + this.spots[i].enabled + '" angle="' + this.spots[i].angle + '" exponent="' + this.spots[i].exponent + '">\n' +
+            '\t\t<target ' + this.CoordinateToString(this.spots[i].target) + '/>\n' +
+            '\t\t<location ' + this.CoordinateToString(this.spots[i].location) + '/>\n' +
+            '\t\t<ambient ' + this.RGBAToString(this.spots[i].ambient) + '/>\n' +
+            '\t\t<diffuse ' + this.RGBAToString(this.spots[i].diffuse) + '/>\n' +
+            '\t\t<specular ' + this.RGBAToString(this.spots[i].specular) + '/>\n' +
+            '\t</spot>\n';
+    }
+
+    str += '</lights>';
+
+    console.log(str);
+}
