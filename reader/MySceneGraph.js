@@ -47,6 +47,7 @@ MySceneGraph.prototype.parseGraph = function(rootElement) {
 	this.parseViews(rootElement);
 	this.parseIllumination(rootElement);
 	this.parseLights(rootElement);
+	this.parseTextures(rootElement);
 };
 
 MySceneGraph.prototype.getBlock = function (rootElement, blockName) {
@@ -190,6 +191,25 @@ MySceneGraph.prototype.parseTextures = function (rootElement) {
 
     if (elems == null) return null;
 
+    var textureBlock = elems[0];
+    this.textures = [];
+	var textures = textureBlock.getElementsByTagName('texture');
+
+	for (var i = 0; i < textures.length; i++) {
+		var id = this.reader.getString(textures[i], 'id', true);
+		var file = this.reader.getString(textures[i], 'file', true);
+		var length_s = this.reader.getFloat(textures[i], 'length_s', true);
+		var length_t = this.reader.getFloat(textures[i], 'length_t', true);
+
+		var tmpTexture = new CGFtexture(this.scene, file);
+		tmpTexture.id = id;
+		tmpTexture.length_s = length_s;
+		tmpTexture.length_t = length_t;
+
+		this.textures.push(tmpTexture);
+	}
+
+	this.logTextures();
     //TODO: finish Textures
 };
 
@@ -370,4 +390,16 @@ MySceneGraph.prototype.logLights = function () {
     str += '</lights>';
 
     console.log(str);
-}
+};
+
+MySceneGraph.prototype.logTextures = function () {
+	var str = '<textures>\n';
+
+	for (var i = 0; i < this.textures.length; i++) {
+		str += '\t<texture id="' + this.textures[i].id + '" file="' + this.textures[i].file + '" length_s="' + this.textures[i].length_s + '" length_t="' + this.textures[i].length_t + '"/>\n';
+	}
+
+	str += '</textures>';
+
+	console.log(str);
+};

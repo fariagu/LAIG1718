@@ -78,7 +78,7 @@
         <!-- objetos respetivos podem a violar esta regra.         -->
         <!-- Nao necessario aplicar fatores de escala em  -->
         <!-- quadricas (esfera, ciclindro...) -->
-        <texture id="texture1" file="ss" length_s="ff" length_t="ff"/>
+        <texture id="texture1" file="tex.jpg" length_s="1" length_t="1"/>
         
     </textures>
 
