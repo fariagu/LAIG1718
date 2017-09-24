@@ -48,6 +48,7 @@ MySceneGraph.prototype.parseGraph = function(rootElement) {
 	this.parseIllumination(rootElement);
 	this.parseLights(rootElement);
 	this.parseTextures(rootElement);
+	this.parseMaterials(rootElement);
 };
 
 MySceneGraph.prototype.getBlock = function (rootElement, blockName) {
@@ -57,8 +58,8 @@ MySceneGraph.prototype.getBlock = function (rootElement, blockName) {
         return null;
     }
 
-    if (elems.length != 1) {
-        this.onXMLError("either zero or more than one '" + blockName + "' element found.");
+    if (elems.length != 1 && elems.parentNode == 'dsx') {
+        this.onXMLError("either zero or more than one '" + blockName + "' element found.(" + elems.length + ")");
         return null;
     }
 
@@ -67,8 +68,10 @@ MySceneGraph.prototype.getBlock = function (rootElement, blockName) {
 
 /**
  * Method that parses Scene block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseScene = function (rootElement) {
 	var elems = MySceneGraph.prototype.getBlock(rootElement, 'scene');
 
@@ -84,8 +87,10 @@ MySceneGraph.prototype.parseScene = function (rootElement) {
 
 /**
  * Method that parses Views block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseViews = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'views');
 
@@ -113,8 +118,10 @@ MySceneGraph.prototype.parseViews = function (rootElement) {
 
 /**
  * Method that parses Illumination block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseIllumination = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'illumination');
 
@@ -134,8 +141,10 @@ MySceneGraph.prototype.parseIllumination = function (rootElement) {
 
 /**
  * Method that parses Lights block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseLights = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'lights');
 
@@ -184,8 +193,10 @@ MySceneGraph.prototype.parseLights = function (rootElement) {
 
 /**
  * Method that parses Textures block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseTextures = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'textures');
 
@@ -201,12 +212,12 @@ MySceneGraph.prototype.parseTextures = function (rootElement) {
 		var length_s = this.reader.getFloat(textures[i], 'length_s', true);
 		var length_t = this.reader.getFloat(textures[i], 'length_t', true);
 
-		var tmpTexture = new CGFtexture(this.scene, file);
-		tmpTexture.id = id;
-		tmpTexture.length_s = length_s;
-		tmpTexture.length_t = length_t;
+		var tmp = new CGFtexture(this.scene, file);
+        tmp.id = id;
+        tmp.length_s = length_s;
+        tmp.length_t = length_t;
 
-		this.textures.push(tmpTexture);
+		this.textures.push(tmp);
 	}
 
 	this.logTextures();
@@ -214,22 +225,41 @@ MySceneGraph.prototype.parseTextures = function (rootElement) {
 
 /**
  * Method that parses Materials block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseMaterials = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'materials');
 
     if (elems == null) return null;
 
-    //TODO: finish Materials
+    var materialsBlock = elems[0];
+    this.materials = [];
+    var materials = materialsBlock.getElementsByTagName('material');
+
+    for (var i = 0; i < materials.length; i++) {
+        var id = this.reader.getString(materials[i], 'id', true);
+        var emission = this.parseRGBA(materials[i].getElementsByTagName('emission')[0], true);
+        var ambient = this.parseRGBA(materials[i].getElementsByTagName('ambient')[0], true);
+        var diffuse = this.parseRGBA(materials[i].getElementsByTagName('diffuse')[0], true);
+        var specular = this.parseRGBA(materials[i].getElementsByTagName('specular')[0], true);
+        var shininess = this.reader.getFloat(materials[i].getElementsByTagName('shininess')[0], 'value', true);
+
+        var tmp = new Material(id, emission, ambient, diffuse, specular, shininess);
+
+        this.materials.push(tmp);
+    }
 
 	this.logMaterials();
 };
 
 /**
  * Method that parses Transformations block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseTransformations = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'transformations');
 
@@ -242,8 +272,10 @@ MySceneGraph.prototype.parseTransformations = function (rootElement) {
 
 /**
  * Method that parses Primitives block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parsePrimitives = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'primitives');
 
@@ -256,8 +288,10 @@ MySceneGraph.prototype.parsePrimitives = function (rootElement) {
 
 /**
  * Method that parses Components block into workable info
+ *
+ * @param rootElement
+ * @returns {null}
  */
-
 MySceneGraph.prototype.parseComponents = function (rootElement) {
     var elems = MySceneGraph.prototype.getBlock(rootElement, 'components');
 
@@ -268,10 +302,11 @@ MySceneGraph.prototype.parseComponents = function (rootElement) {
 	this.logComponents();
 };
 
-/*
+/**
  * Callback to be executed on any read error
+ *
+ * @param message
  */
- 
 MySceneGraph.prototype.onXMLError=function (message) {
 	console.error("XML Loading Error: "+message);	
 	this.loadedOk=false;
@@ -423,7 +458,16 @@ MySceneGraph.prototype.logTextures = function () {
 MySceneGraph.prototype.logMaterials = function () {
 	var str = '<materials>\n';
 
-	//TODO: finish
+    for (var i = 0; i < this.materials.length; i++) {
+        str += '\t<material id="' + this.materials[i].id + '">\n' +
+			'\t\t<emission ' + this.RGBAToString(this.materials[i].emission) + '/>\n' +
+			'\t\t<ambient ' + this.RGBAToString(this.materials[i].ambient) + '/>\n' +
+			'\t\t<diffuse ' + this.RGBAToString(this.materials[i].diffuse) + '/>\n' +
+			'\t\t<specular ' + this.RGBAToString(this.materials[i].specular) + '/>\n' +
+			'\t\t<shininess value="' + this.materials[i].shininess + '"/>\n' +
+			'\t</material>\n';
+
+    }
 
 	str += '</materials>';
 
