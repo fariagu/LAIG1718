@@ -210,7 +210,6 @@ MySceneGraph.prototype.parseTextures = function (rootElement) {
 	}
 
 	this.logTextures();
-    //TODO: finish Textures
 };
 
 /**
@@ -223,6 +222,8 @@ MySceneGraph.prototype.parseMaterials = function (rootElement) {
     if (elems == null) return null;
 
     //TODO: finish Materials
+
+	this.logMaterials();
 };
 
 /**
@@ -235,6 +236,8 @@ MySceneGraph.prototype.parseTransformations = function (rootElement) {
     if (elems == null) return null;
 
     //TODO: finish Transformations
+
+	this.logTransformations();
 };
 
 /**
@@ -247,6 +250,8 @@ MySceneGraph.prototype.parsePrimitives = function (rootElement) {
     if (elems == null) return null;
 
     //TODO: finish Primitives
+
+	this.logPrimitives();
 };
 
 /**
@@ -259,6 +264,8 @@ MySceneGraph.prototype.parseComponents = function (rootElement) {
     if (elems == null) return null;
 
     //TODO: finish Components
+
+	this.logComponents();
 };
 
 /*
@@ -365,6 +372,9 @@ MySceneGraph.prototype.logIllumination = function () {
         '</illumination>');
 };
 
+/**
+ * Logging function
+ */
 MySceneGraph.prototype.logLights = function () {
     var str = '<lights>\n';
 
@@ -392,6 +402,9 @@ MySceneGraph.prototype.logLights = function () {
     console.log(str);
 };
 
+/**
+ * Logging function
+ */
 MySceneGraph.prototype.logTextures = function () {
 	var str = '<textures>\n';
 
@@ -402,4 +415,56 @@ MySceneGraph.prototype.logTextures = function () {
 	str += '</textures>';
 
 	console.log(str);
+};
+
+/**
+ * Logging function
+ */
+MySceneGraph.prototype.logMaterials = function () {
+	var str = '<materials>\n';
+
+	//TODO: finish
+
+	str += '</materials>';
+
+	console.log(str);
+};
+
+/**
+ * Logging function
+ */
+MySceneGraph.prototype.logTransformations = function () {
+    var str = '<transformations>\n';
+
+    //TODO: finish
+
+    str += '</transformations>';
+
+    console.log(str);
+};
+
+/**
+ * Logging function
+ */
+MySceneGraph.prototype.logPrimitives = function () {
+    var str = '<primitives>\n';
+
+    //TODO: finish
+
+    str += '</primitives>';
+
+    console.log(str);
+};
+
+/**
+ * Logging function
+ */
+MySceneGraph.prototype.logComponents = function () {
+    var str = '<components>\n';
+
+    //TODO: finish
+
+    str += '</components>';
+
+    console.log(str);
 };
